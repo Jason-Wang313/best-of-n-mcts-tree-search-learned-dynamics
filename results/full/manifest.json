@@ -1,0 +1,16 @@
+{
+  "amplification_delta": 0.385913932200343,
+  "depth_profile": "results\\full\\depth_profile.csv",
+  "episode_metrics": "results\\full\\episode_metrics.csv",
+  "figures": [
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\compute_scaling.png",
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\bias_amplification.png",
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\depth_bias_profile.png"
+  ],
+  "mode": "full",
+  "plan_metrics": "results\\full\\plan_metrics.csv",
+  "repair_delta": 0.4505576889182782,
+  "root_stats": "results\\full\\root_stats.json",
+  "strongest_result": "At budget 1024, mean selected-return optimism gap was 0.686 for uct_mcts, 0.301 for best-of-N, and 0.236 for the best calibrated repair (uncertainty_mcts).",
+  "summary": "results\\full\\summary.csv"
+}
