@@ -1,5 +1,4 @@
 {
-  "best_of_n_budget_256_seed_0": {},
   "conservative_mcts_budget_256_seed_0": {
     "0": {
       "action_x": 0.0,
@@ -101,6 +100,7 @@
       "visits": 1.0
     }
   },
+  "static_rollout_pool_budget_256_seed_0": {},
   "uct_mcts_budget_256_seed_0": {
     "0": {
       "action_x": 0.0,

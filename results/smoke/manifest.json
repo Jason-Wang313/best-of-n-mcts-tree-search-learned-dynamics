@@ -8,9 +8,11 @@
     "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\depth_bias_profile.png"
   ],
   "mode": "smoke",
+  "pairwise_deltas": "results\\smoke\\pairwise_deltas.csv",
   "plan_metrics": "results\\smoke\\plan_metrics.csv",
   "repair_delta": 1.3334467088563802,
   "root_stats": "results\\smoke\\root_stats.json",
-  "strongest_result": "At budget 128, mean selected-return optimism gap was 1.444 for value_mcts, 0.029 for best-of-N, and 0.110 for the best calibrated repair (conservative_mcts).",
-  "summary": "results\\smoke\\summary.csv"
+  "strongest_result": "At budget 128, mean selected-return optimism gap was 1.444 for Value MCTS, 0.029 for the static rollout pool, and 0.110 for the best calibrated repair (Conservative MCTS). The paired Value MCTS minus static delta had mean 1.414, median 0.001, positive fraction 0.50, and max 5.656; the paired repair delta mean was 0.081.",
+  "summary": "results\\smoke\\summary.csv",
+  "tail_metrics": "results\\smoke\\tail_metrics.csv"
 }

@@ -8,9 +8,11 @@
     "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\depth_bias_profile.png"
   ],
   "mode": "full",
+  "pairwise_deltas": "results\\full\\pairwise_deltas.csv",
   "plan_metrics": "results\\full\\plan_metrics.csv",
   "repair_delta": 0.4505576889182782,
   "root_stats": "results\\full\\root_stats.json",
-  "strongest_result": "At budget 1024, mean selected-return optimism gap was 0.686 for uct_mcts, 0.301 for best-of-N, and 0.236 for the best calibrated repair (uncertainty_mcts).",
-  "summary": "results\\full\\summary.csv"
+  "strongest_result": "At budget 1024, mean selected-return optimism gap was 0.686 for UCT MCTS, 0.301 for the static rollout pool, and 0.236 for the best calibrated repair (Uncertainty MCTS). The paired UCT MCTS minus static delta had mean 0.386, median -0.000, positive fraction 0.20, and max 7.021; the paired repair delta mean was -0.065.",
+  "summary": "results\\full\\summary.csv",
+  "tail_metrics": "results\\full\\tail_metrics.csv"
 }

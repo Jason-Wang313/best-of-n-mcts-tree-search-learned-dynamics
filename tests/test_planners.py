@@ -1,16 +1,16 @@
 import numpy as np
 
-from bonmcts.envs import PointMassWorld, make_action_set
-from bonmcts.models import BiasedLearnedModel
-from bonmcts.planners import BestOfNPlanner, Edge, MCTSPlanner, PlannerConfig, TreeNode
+from search_concentration_audit.envs import PointMassWorld, make_action_set
+from search_concentration_audit.models import BiasedLearnedModel
+from search_concentration_audit.planners import StaticRolloutPlanner, Edge, MCTSPlanner, PlannerConfig, TreeNode
 
 
-def test_best_of_n_budget_accounting():
+def test_static_rollout_pool_budget_accounting():
     world = PointMassWorld()
     model = BiasedLearnedModel(world)
-    planner = BestOfNPlanner(
+    planner = StaticRolloutPlanner(
         make_action_set(),
-        PlannerConfig(name="best_of_n", horizon=5, budget=23),
+        PlannerConfig(name="static_rollout_pool", horizon=5, budget=23),
     )
 
     result = planner.plan(model, world.reset(), seed=1)

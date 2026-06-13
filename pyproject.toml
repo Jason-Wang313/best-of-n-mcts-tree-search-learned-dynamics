@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "bonmcts"
+name = "search-concentration-audit"
 version = "0.1.0"
-description = "Controlled experiments on best-of-N and MCTS with biased learned dynamics."
+description = "Controlled audits of search concentration in MCTS with biased learned dynamics."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -26,4 +26,3 @@ where = ["src"]
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "-q"
-

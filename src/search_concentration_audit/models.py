@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from bonmcts.envs import Array, PointMassWorld
+from search_concentration_audit.envs import Array, PointMassWorld
 
 
 @dataclass(frozen=True)

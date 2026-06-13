@@ -11,7 +11,7 @@
 \graphicspath{{figures/}}
 \hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
 
-\title{Best-of-N or Tree Search?\\A Controlled Study of Learned-Dynamics Optimism Under Test-Time Planning}
+\title{Search-Concentration Audits for Learned-Dynamics Tree Planning}
 
 % Anonymous review mode is active while \iclrfinalcopy remains commented out.
 \author{Anonymous Authors}
@@ -21,71 +21,94 @@
 \maketitle
 
 \begin{abstract}
-Tree search over a learned dynamics model is usually framed as planning. This paper studies a complementary view: adaptive search is also a test-time optimizer over the model, and can therefore concentrate compute on model errors. We introduce a controlled continuous-control point-mass task with a localized optimistic bias pocket in a dynamics and reward surrogate. Static best-of-N evaluates independent rollouts, while UCT MCTS adaptively expands and backs up branches that look valuable under the surrogate. In a repeated-seed full run, UCT MCTS exhibits a larger selected-return optimism gap than best-of-N at the largest tested forward-model budget, and uncertainty-penalized search reduces the gap below both. The contribution is not a robotics benchmark result; it is a compact mechanism testbed for studying when adaptive planning improves behavior and when it amplifies model optimism.
+Tree search over learned dynamics is usually presented as extra planning computation. This paper audits a complementary failure mode: adaptive tree expansion can concentrate model queries on a locally optimistic error and turn a learned simulator into its own adversarial objective. We build a controlled two-dimensional dynamics audit with a known reward and transition bias pocket, then compare a static rollout pool, UCT MCTS, value-guided MCTS, and uncertainty-aware repairs under equal forward-model budgets. The main result is a tail-risk finding, not a dominance claim. At budget 1024, UCT MCTS has a larger mean selected-return optimism gap than the static pool (0.686 versus 0.301) and a larger worst branch-capture event (7.021), while the paired median delta is near zero and UCT exceeds the static pool on only 20\% of seeds. An uncertainty-penalized search objective reduces the mean gap to 0.236 and the 90th-percentile gap to 0.156 in the same artifact. The contribution is a reproducible audit protocol for detecting when adaptive planning spends computation on model optimism rather than real return.
 \end{abstract}
 
 \section{Introduction}
 
-Learned model-based agents such as PlaNet, Dreamer, and PETS show that learned dynamics can support efficient control \citep{hafner2019planet,hafner2020dreamer,chua2018pets}. Monte Carlo tree search (MCTS) variants are also being extended to imperfect or continuous transition models \citep{kohankhaki2024transition,riviere2024sets}. These systems usually treat search as a way to spend extra computation at test time in order to improve action selection.
+Learned model-based agents such as PlaNet, Dreamer, and PETS show that learned dynamics can support efficient control \citep{hafner2019planet,hafner2020dreamer,chua2018pets}. Recent tree-search work further asks how to plan when transitions are uncertain or continuous \citep{kohankhaki2024transition,riviere2024sets}. In all of these systems, additional model queries are valuable only if the model remains a trustworthy evaluator over the region that search discovers.
 
-This paper studies a failure mode of that framing. If the dynamics or reward model is also the test-time evaluator, then adaptive planning is optimizing a fallible objective. More model queries can discover better plans, but they can also discover and repeatedly exploit localized optimism. We isolate this mechanism in a small deterministic control problem where the true environment and the biased surrogate are both known, making the optimism gap directly measurable.
+This paper studies what happens when that premise fails locally. If the same learned dynamics and reward surrogate both proposes and scores futures, adaptive search becomes a test-time optimizer over a fallible simulator. A branch that accidentally enters an optimistic pocket can receive higher backed-up value, attract more visits, and receive still more model queries. The error is therefore not merely sampled; it is amplified by the search allocation rule.
 
-The central question is narrow: under equal forward-model budgets, can adaptive tree search select plans whose model-predicted return is more optimistic than plans selected by static best-of-N sampling? In the controlled setting studied here, the answer is yes for UCT MCTS at the largest tested budget. We also test two uncertainty-based repairs that lower the selected-return gap in the same artifact.
+We frame this as a search-concentration audit. The audit compares static non-adaptive rollout selection to several adaptive tree-search variants under identical forward-model budgets, and it records not only selected return but also model-return optimism, reward-bias exposure, transition error, root visit concentration, depth-wise bias, and paired seed deltas. This lets the paper ask a precise question: does adaptive search create rare but severe branch-capture events under a biased learned model?
+
+The answer in this controlled artifact is yes, but in a scoped way. UCT MCTS has a higher mean optimism gap and a much larger worst event at the largest budget, yet it does not stochastically dominate the static rollout pool in paired seeds. This distinction matters. A broad claim that tree search is generally more optimistic would be false for these data; the supported claim is that adaptive allocation can create a heavier optimism tail, and that uncertainty-aware scoring can shrink that tail when uncertainty is aligned with the bias pocket.
 
 \section{Related Work}
 
-Model-based reinforcement learning has long used learned transition models for planning and policy improvement. PETS uses probabilistic ensembles with model-predictive control \citep{chua2018pets}, while PlaNet and Dreamer learn latent dynamics that support planning or policy learning by imagination \citep{hafner2019planet,hafner2020dreamer}. These successes motivate using learned dynamics as a source of test-time computation, but they also expose agents to model bias when planning aggressively.
+Model-based reinforcement learning uses learned transition models for planning, policy improvement, or imagined value learning. PETS combines probabilistic ensembles with model-predictive control \citep{chua2018pets}, while PlaNet and Dreamer learn latent dynamics for planning or behavior learning through imagination \citep{hafner2019planet,hafner2020dreamer}. These methods motivate test-time planning with learned models, but also make model bias a central evaluation risk.
 
-MCTS is a canonical adaptive search procedure, and recent work studies tree search under transition uncertainty and continuous dynamics \citep{kohankhaki2024transition,riviere2024sets}. Separately, test-time compute work distinguishes independent best-of-N sampling from adaptive search against a learned scorer \citep{snell2024testtime}. Our experiment connects these views by asking how adaptive allocation changes exposure to model optimism when the evaluator is imperfect.
+MCTS is a canonical adaptive allocation procedure. Recent work studies tree search under transition uncertainty and continuous dynamical systems \citep{kohankhaki2024transition,riviere2024sets}. Our focus is different from improving expansion rules: we ask whether the allocation rule itself can concentrate computation on local model optimism.
 
-\section{Method}
+Inference-time compute work also separates independent sampling from adaptive search against a learned scorer \citep{snell2024testtime}. We import that lens into learned-dynamics planning without claiming an algorithmic benchmark advance. The contribution is an audit that exposes when additional planning computation is spent on a biased evaluator.
 
-\subsection{Controlled Environment}
+\section{Audit Design}
 
-The environment is a deterministic two-dimensional point robot. The true reward encourages progress to a goal, penalizes action cost, and mildly penalizes an off-route pocket. The surrogate dynamics and reward model is accurate almost everywhere but, near that pocket, predicts extra reward and a transition drift toward the goal. It also reports elevated uncertainty in the same region. This makes the failure mode visible without claiming that the surrogate was learned from data.
+\subsection{Controlled Dynamics}
 
-For a selected action sequence \(a_{0:H-1}\), we measure
+The environment is a deterministic two-dimensional point robot. The true reward encourages progress to a goal, penalizes action cost, and mildly penalizes an off-route pocket. The surrogate dynamics and reward model is accurate almost everywhere but, near that pocket, predicts extra reward and a transition drift toward the goal. It also reports elevated uncertainty in the same region. This makes the mechanism observable without claiming that the surrogate was trained from data.
+
+For a selected action sequence \(a_{0:H-1}\), the primary audit metric is
 \[
 \Delta_{\mathrm{opt}} =
   \hat G(a_{0:H-1}) - G(a_{0:H-1}),
 \]
-where \(\hat G\) is the surrogate rollout return and \(G\) is the true rollout return for the same sequence. Lower \(\Delta_{\mathrm{opt}}\) is better. We also record cumulative reward bias, transition error, uncertainty exposure, root visit concentration, and depth-wise reward bias.
+where \(\hat G\) is the surrogate rollout return and \(G\) is the true rollout return for the same sequence. Lower \(\Delta_{\mathrm{opt}}\) is better. The audit also records cumulative reward bias, transition error, uncertainty exposure, root visit concentration, depth-wise reward bias, tail quantiles, and paired deltas against the static rollout pool.
 
 \subsection{Planners}
 
-All planners use the same discrete action set, horizon \(H=18\), discount \(\gamma=0.98\), and forward-model budget accounting. The suite includes a random open-loop baseline, static best-of-N rollout selection, UCT MCTS, value-guided MCTS, uncertainty-penalized MCTS, and conservative-backup MCTS. Best-of-N samples independent open-loop trajectories and selects the maximum surrogate return. MCTS adaptively expands and backs up branches according to UCB-style selection.
+All planners use the same discrete action set, horizon \(H=18\), discount \(\gamma=0.98\), and forward-model budget accounting. The suite includes a random open-loop baseline, a static rollout pool that scores independent open-loop trajectories once, UCT MCTS, value-guided MCTS, uncertainty-penalized MCTS, and conservative-backup MCTS. The static pool is a non-adaptive control: it can select an optimistic trajectory, but it cannot use earlier optimistic evaluations to allocate additional evaluations toward the same region. MCTS adaptively expands and backs up branches according to UCB-style selection.
 
 The intended repair is a lower-confidence search target. If the uncertainty signal \(u(s,a)\) tracks local optimism, replacing \(\hat r\) with \(\hat r-\lambda u\) during scoring or backup can suppress the optimistic branch before it dominates root statistics. This is a controlled calibration assumption rather than a general statistical guarantee.
 
 \section{Experiments}
 
-The full run uses 20 random seeds and five budget settings from 64 to 1024. The committed artifacts include per-plan metrics, closed-loop episode diagnostics at the largest budget, root statistics, and the figures used below. The headline result is recorded in \path{results/full/manifest.json}, with mean diagnostics in \path{results/full/summary.csv}.
+The full run uses 20 random seeds and five budget settings from 64 to 1024. The committed artifacts include per-plan metrics, closed-loop episode diagnostics at the largest budget, root statistics, tail summaries, paired deltas, and the figures used below. The headline result is recorded in \path{results/full/manifest.json}; mean diagnostics, tail metrics, and paired comparisons are stored in \path{results/full/summary.csv}, \path{results/full/tail_metrics.csv}, and \path{results/full/pairwise_deltas.csv}.
 
 \begin{table}[t]
-\caption{Mean diagnostics at budget 1024. Lower optimism gap is better. Root concentration is the fraction of root visits assigned to the most visited child and is defined only for tree-search methods.}
-\label{tab:budget1024}
+\caption{Selected-return optimism tail at budget 1024. Lower values are better. Median, 90th percentile, and maximum expose whether a mean result reflects typical behavior or rare branch-capture events.}
+\label{tab:tail1024}
 \begin{center}
-\begin{tabular}{lcc}
+\begin{tabular}{lcccc}
 \toprule
-Planner & Optimism gap & Root concentration \\
+Planner & Mean & Median & 90th pct. & Max \\
 \midrule
-Best-of-N & 0.301 & -- \\
-UCT MCTS & 0.686 & 0.649 \\
-Value MCTS & 0.397 & 0.316 \\
-Uncertainty MCTS & 0.236 & 0.727 \\
-Conservative MCTS & 0.261 & 0.729 \\
+Static rollout pool & 0.301 & 0.011 & 0.589 & 3.301 \\
+UCT MCTS & 0.686 & 0.000 & 0.972 & 7.021 \\
+Value MCTS & 0.397 & 0.001 & 0.196 & 6.803 \\
+Uncertainty MCTS & 0.236 & 0.000 & 0.156 & 3.986 \\
+Conservative MCTS & 0.261 & 0.000 & 0.431 & 4.300 \\
 \bottomrule
 \end{tabular}
 \end{center}
 \end{table}
 
-Table~\ref{tab:budget1024} shows the largest-budget slice. UCT MCTS has a selected-return optimism gap of 0.686, compared with 0.301 for static best-of-N. The strongest uncertainty-penalized repair in this run reduces the gap to 0.236, below both UCT MCTS and best-of-N.
+Table~\ref{tab:tail1024} shows the largest-budget slice. UCT MCTS has the highest mean optimism gap among the main methods and a much larger maximum gap than the static rollout pool. However, the median UCT gap is essentially zero. The result is therefore a tail-risk diagnosis: adaptive search occasionally locks onto the optimistic pocket, and those events dominate the mean.
+
+\begin{table}[t]
+\caption{Paired seed deltas against the static rollout pool at budget 1024. Positive means the adaptive method had a larger optimism gap on that seed.}
+\label{tab:paired1024}
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Planner minus static pool & Mean & Median & Positive fraction & Max \\
+\midrule
+UCT MCTS & 0.386 & -0.000 & 0.20 & 7.021 \\
+Value MCTS & 0.096 & -0.000 & 0.40 & 6.802 \\
+Uncertainty MCTS & -0.065 & -0.001 & 0.30 & 0.685 \\
+Conservative MCTS & -0.040 & -0.000 & 0.35 & 4.247 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+Table~\ref{tab:paired1024} prevents overclaiming. UCT MCTS does not have a larger optimism gap on most paired seeds; its mean delta comes from rare large events. The uncertainty-penalized planner is the strongest repair in this run: it lowers the mean gap, the upper tail, and the paired mean delta, although it is not a formal guarantee under arbitrary uncertainty miscalibration.
 
 \begin{figure}[t]
 \begin{center}
 \includegraphics[width=0.92\linewidth]{compute_scaling.png}
 \end{center}
-\caption{Selected-return optimism gap across forward-model budgets.}
+\caption{Mean selected-return optimism gap across forward-model budgets.}
 \label{fig:compute-scaling}
 \end{figure}
 
@@ -109,19 +132,19 @@ Figure~\ref{fig:compute-scaling} plots the optimism gap over budgets. Figure~\re
 
 \section{Reproducibility}
 
-The accompanying artifact is organized around relative paths only. The full experiment is produced by \path{experiments/run_mechanism.py} with mode \path{full} and output \path{results/full}; the smoke run changes the mode and output path to \path{smoke} and \path{results/smoke}. The experiments use deterministic seeds \(0,\ldots,19\) for the full run, and the generated CSV/JSON/PNG outputs are committed under \path{results/full/} and \path{paper/figures/}. The paper build is scripted by \path{scripts/build_paper.ps1}.
+The accompanying artifact is organized around relative paths only. The full experiment is produced by \path{experiments/run_mechanism.py} with mode \path{full} and output \path{results/full}; the smoke run changes the mode and output path to \path{smoke} and \path{results/smoke}. The experiments use deterministic seeds \(0,\ldots,19\) for the full run, and the generated CSV/JSON/PNG outputs are committed under \path{results/full/} and \path{paper/figures/}. The paper build is scripted by \path{scripts/build_paper.ps1}, which also exports the versioned Desktop PDF.
 
 \section{Discussion}
 
-The result supports a narrow mechanism claim: in this controlled model, adaptive UCT search can select trajectories whose surrogate return is more optimistic than trajectories selected by static best-of-N under equal model-step budgets. The uncertainty-penalized variants reduce the selected-return gap in the largest-budget run, suggesting that uncertainty-aware objectives can be useful when uncertainty is aligned with model optimism.
+The result supports a narrow mechanism claim: in this controlled model, adaptive tree search can produce rare branch-capture events where the selected surrogate return is much more optimistic than the true return under the same action sequence. The static rollout pool also sometimes selects optimistic trajectories, but it lacks a feedback loop that concentrates further model calls on a discovered optimistic branch.
 
-The experiment should be read as a microscope, not a benchmark. Its value is that the failure mode is observable, testable, and easy to extend. It does not establish that the same effect dominates in high-dimensional robotics tasks, nor that the uncertainty penalty transfers across model classes.
+The experiment should be read as a microscope, not a benchmark. Its value is that the failure mode is observable, testable, and easy to extend. It does not establish that the same effect dominates in high-dimensional robotics tasks, nor that the uncertainty penalty transfers across model classes. The paired statistics are included specifically to prevent the mechanism claim from being mistaken for a broad dominance claim.
 
 \section{Limitations and Next Steps}
 
 The surrogate model is hand-designed rather than trained from data. The uncertainty signal is intentionally aligned with the injected bias pocket. The curves are seed-sensitive because the task is deliberately small, and no statistical claim beyond the committed repeated-seed run is made here.
 
-The next version should train an ensemble dynamics model on biased or off-policy data, add continuous-action expansion or sampling-based proposals, and evaluate on at least one standard continuous-control benchmark. The repair should be stress-tested under miscalibrated uncertainty and value-function optimism. The most important open question is whether search concentration predicts real downstream regret when the model is learned rather than specified.
+The next version should train an ensemble dynamics model on biased or off-policy data, add continuous-action expansion or sampling-based proposals, and evaluate on at least one standard continuous-control benchmark. The repair should be stress-tested under miscalibrated uncertainty, value-function optimism, and biased action proposals. The most important open question is whether search concentration predicts real downstream regret when the model is learned rather than specified.
 
 \bibliographystyle{iclr2026_conference}
 \bibliography{references}

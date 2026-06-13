@@ -1,7 +1,7 @@
 import numpy as np
 
-from bonmcts.envs import PointMassWorld
-from bonmcts.models import BiasedLearnedModel
+from search_concentration_audit.envs import PointMassWorld
+from search_concentration_audit.models import BiasedLearnedModel
 
 
 def test_bias_pocket_reports_higher_bias_and_uncertainty():

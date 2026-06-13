@@ -1,6 +1,6 @@
 import numpy as np
 
-from bonmcts.envs import PointMassWorld, make_action_set
+from search_concentration_audit.envs import PointMassWorld, make_action_set
 
 
 def test_world_transition_is_deterministic():

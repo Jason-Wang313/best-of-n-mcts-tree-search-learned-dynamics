@@ -6,8 +6,8 @@ from typing import Protocol
 
 import numpy as np
 
-from bonmcts.envs import Array
-from bonmcts.models import BiasedLearnedModel
+from search_concentration_audit.envs import Array
+from search_concentration_audit.models import BiasedLearnedModel
 
 
 @dataclass(frozen=True)
@@ -72,8 +72,8 @@ class OpenLoopRandomPlanner:
         )
 
 
-class BestOfNPlanner:
-    """Independent static best-of-N rollout selection under the learned model."""
+class StaticRolloutPlanner:
+    """Static rollout-pool selection under the learned model."""
 
     def __init__(self, action_set: Array, config: PlannerConfig):
         self.action_set = np.asarray(action_set, dtype=float)
@@ -345,4 +345,3 @@ class MCTSPlanner:
                 count += 1
                 stack.append(edge.child)
         return count
-

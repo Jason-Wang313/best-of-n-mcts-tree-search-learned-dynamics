@@ -13,10 +13,22 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from bonmcts.diagnostics import closed_loop_episode, evaluate_plan, write_json
-from bonmcts.envs import PointMassWorld, make_action_set
-from bonmcts.models import BiasPocketConfig, BiasedLearnedModel
-from bonmcts.planners import BestOfNPlanner, MCTSPlanner, OpenLoopRandomPlanner, PlannerConfig
+from search_concentration_audit.diagnostics import closed_loop_episode, evaluate_plan, write_json
+from search_concentration_audit.envs import PointMassWorld, make_action_set
+from search_concentration_audit.models import BiasPocketConfig, BiasedLearnedModel
+from search_concentration_audit.planners import MCTSPlanner, OpenLoopRandomPlanner, PlannerConfig, StaticRolloutPlanner
+
+
+DISPLAY_NAMES = {
+    "random_open_loop": "Random open-loop",
+    "static_rollout_pool": "Static rollout pool",
+    "uct_mcts": "UCT MCTS",
+    "value_mcts": "Value MCTS",
+    "uncertainty_mcts": "Uncertainty MCTS",
+    "conservative_mcts": "Conservative MCTS",
+}
+
+ADAPTIVE_PLANNERS = ["uct_mcts", "value_mcts", "uncertainty_mcts", "conservative_mcts"]
 
 
 def make_planners(action_set: np.ndarray, budget: int, horizon: int, gamma: float):
@@ -25,9 +37,9 @@ def make_planners(action_set: np.ndarray, budget: int, horizon: int, gamma: floa
             action_set,
             PlannerConfig(name="random_open_loop", horizon=horizon, budget=budget, gamma=gamma),
         ),
-        BestOfNPlanner(
+        StaticRolloutPlanner(
             action_set,
-            PlannerConfig(name="best_of_n", horizon=horizon, budget=budget, gamma=gamma),
+            PlannerConfig(name="static_rollout_pool", horizon=horizon, budget=budget, gamma=gamma),
         ),
         MCTSPlanner(
             action_set,
@@ -133,7 +145,7 @@ def run(mode: str, output: Path) -> dict[str, Path | float | str]:
                     episode_rows.append(episode)
 
                 if budget == budgets[-1] and seed == seeds[0] and planner.name in {
-                    "best_of_n",
+                    "static_rollout_pool",
                     "uct_mcts",
                     "uncertainty_mcts",
                     "conservative_mcts",
@@ -161,11 +173,17 @@ def run(mode: str, output: Path) -> dict[str, Path | float | str]:
     depth_path = output / "depth_profile.csv"
     summary_path = output / "summary.csv"
     root_path = output / "root_stats.json"
+    tail_path = output / "tail_metrics.csv"
+    pairwise_path = output / "pairwise_deltas.csv"
     plan_df.to_csv(plan_path, index=False)
     episode_df.to_csv(episode_path, index=False)
     depth_df.to_csv(depth_path, index=False)
     summary.to_csv(summary_path, index=False)
     write_json(root_path, root_payload)
+    tail_df = tail_summary(plan_df)
+    pairwise_df = paired_delta_summary(plan_df)
+    tail_df.to_csv(tail_path, index=False)
+    pairwise_df.to_csv(pairwise_path, index=False)
 
     make_figures(plan_df, episode_df, depth_df, figure_dir)
 
@@ -179,9 +197,17 @@ def run(mode: str, output: Path) -> dict[str, Path | float | str]:
     best_repair = repair_slice.sort_values("selected_return_gap", ascending=True).iloc[0]
     repair_planner = str(best_repair["planner"])
     repair_gap = float(best_repair["selected_return_gap"])
-    best_of_n_gap = float(best_slice.loc[best_slice["planner"] == "best_of_n", "selected_return_gap"].iloc[0])
+    static_pool_gap = float(
+        best_slice.loc[best_slice["planner"] == "static_rollout_pool", "selected_return_gap"].iloc[0]
+    )
+    paired_slice = pairwise_df[
+        (pairwise_df["budget"] == best_budget) & (pairwise_df["planner"] == mechanism_planner)
+    ].iloc[0]
+    repair_paired_slice = pairwise_df[
+        (pairwise_df["budget"] == best_budget) & (pairwise_df["planner"] == repair_planner)
+    ].iloc[0]
     repair_delta = mechanism_gap - repair_gap
-    amplification_delta = mechanism_gap - best_of_n_gap
+    amplification_delta = mechanism_gap - static_pool_gap
 
     manifest = {
         "mode": mode,
@@ -189,6 +215,8 @@ def run(mode: str, output: Path) -> dict[str, Path | float | str]:
         "episode_metrics": str(episode_path),
         "depth_profile": str(depth_path),
         "summary": str(summary_path),
+        "tail_metrics": str(tail_path),
+        "pairwise_deltas": str(pairwise_path),
         "root_stats": str(root_path),
         "figures": [
             str(figure_dir / "compute_scaling.png"),
@@ -197,8 +225,14 @@ def run(mode: str, output: Path) -> dict[str, Path | float | str]:
         ],
         "strongest_result": (
             f"At budget {best_budget}, mean selected-return optimism gap was "
-            f"{mechanism_gap:.3f} for {mechanism_planner}, {best_of_n_gap:.3f} for best-of-N, "
-            f"and {repair_gap:.3f} for the best calibrated repair ({repair_planner})."
+            f"{mechanism_gap:.3f} for {DISPLAY_NAMES.get(mechanism_planner, mechanism_planner)}, "
+            f"{static_pool_gap:.3f} for the static rollout pool, and {repair_gap:.3f} for the best "
+            f"calibrated repair ({DISPLAY_NAMES.get(repair_planner, repair_planner)}). "
+            f"The paired {DISPLAY_NAMES.get(mechanism_planner, mechanism_planner)} minus static delta had mean "
+            f"{float(paired_slice['mean_delta']):.3f}, median {float(paired_slice['median_delta']):.3f}, "
+            f"positive fraction {float(paired_slice['positive_fraction']):.2f}, and max "
+            f"{float(paired_slice['max_delta']):.3f}; the paired repair delta mean was "
+            f"{float(repair_paired_slice['mean_delta']):.3f}."
         ),
         "repair_delta": repair_delta,
         "amplification_delta": amplification_delta,
@@ -209,10 +243,56 @@ def run(mode: str, output: Path) -> dict[str, Path | float | str]:
     return manifest
 
 
+def tail_summary(plan_df: pd.DataFrame) -> pd.DataFrame:
+    grouped = plan_df.groupby(["planner", "budget"])["selected_return_gap"]
+    summary = grouped.agg(mean_gap="mean", median_gap="median", std_gap="std", max_gap="max").reset_index()
+    quantiles = grouped.quantile([0.9, 0.95]).unstack(level=-1).reset_index()
+    quantiles = quantiles.rename(columns={0.9: "q90_gap", 0.95: "q95_gap"})
+    return summary.merge(quantiles, on=["planner", "budget"], how="left")
+
+
+def paired_delta_summary(plan_df: pd.DataFrame) -> pd.DataFrame:
+    rows: list[dict[str, float | int | str]] = []
+    rng = np.random.default_rng(20260613)
+    for budget in sorted(plan_df["budget"].unique()):
+        budget_df = plan_df[plan_df["budget"] == budget]
+        wide = budget_df.pivot(index="seed", columns="planner", values="selected_return_gap")
+        if "static_rollout_pool" not in wide:
+            continue
+        for planner in ADAPTIVE_PLANNERS:
+            if planner not in wide:
+                continue
+            delta = (wide[planner] - wide["static_rollout_pool"]).dropna().to_numpy(dtype=float)
+            low, high = bootstrap_mean_ci(delta, rng)
+            rows.append(
+                {
+                    "budget": int(budget),
+                    "planner": planner,
+                    "baseline": "static_rollout_pool",
+                    "n": int(delta.size),
+                    "mean_delta": float(np.mean(delta)),
+                    "median_delta": float(np.median(delta)),
+                    "positive_fraction": float(np.mean(delta > 0.0)),
+                    "min_delta": float(np.min(delta)),
+                    "max_delta": float(np.max(delta)),
+                    "bootstrap_mean_delta_low": low,
+                    "bootstrap_mean_delta_high": high,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def bootstrap_mean_ci(values: np.ndarray, rng: np.random.Generator, repeats: int = 5000) -> tuple[float, float]:
+    if values.size == 0:
+        return float("nan"), float("nan")
+    samples = rng.choice(values, size=(repeats, values.size), replace=True).mean(axis=1)
+    return float(np.quantile(samples, 0.025)), float(np.quantile(samples, 0.975))
+
+
 def make_figures(plan_df: pd.DataFrame, episode_df: pd.DataFrame, depth_df: pd.DataFrame, figure_dir: Path) -> None:
     palette = {
         "random_open_loop": "#6f6f6f",
-        "best_of_n": "#2f6fdd",
+        "static_rollout_pool": "#2f6fdd",
         "uct_mcts": "#c2410c",
         "value_mcts": "#8b5cf6",
         "uncertainty_mcts": "#0f766e",
@@ -220,7 +300,7 @@ def make_figures(plan_df: pd.DataFrame, episode_df: pd.DataFrame, depth_df: pd.D
     }
 
     summary = plan_df.groupby(["planner", "budget"], as_index=False).mean(numeric_only=True)
-    order = ["best_of_n", "uct_mcts", "value_mcts", "uncertainty_mcts", "conservative_mcts"]
+    order = ["static_rollout_pool", "uct_mcts", "value_mcts", "uncertainty_mcts", "conservative_mcts"]
 
     plt.figure(figsize=(7.0, 4.2))
     for planner in order:
@@ -232,7 +312,7 @@ def make_figures(plan_df: pd.DataFrame, episode_df: pd.DataFrame, depth_df: pd.D
             sub["selected_return_gap"],
             marker="o",
             linewidth=2.0,
-            label=planner,
+            label=DISPLAY_NAMES.get(planner, planner),
             color=palette.get(planner),
         )
     plt.xscale("log", base=2)
@@ -246,7 +326,7 @@ def make_figures(plan_df: pd.DataFrame, episode_df: pd.DataFrame, depth_df: pd.D
     plt.close()
 
     fig, ax1 = plt.subplots(figsize=(7.0, 4.2))
-    for planner in ["uct_mcts", "value_mcts", "uncertainty_mcts", "conservative_mcts"]:
+    for planner in ADAPTIVE_PLANNERS:
         sub = summary[summary["planner"] == planner]
         if sub.empty:
             continue
@@ -255,7 +335,7 @@ def make_figures(plan_df: pd.DataFrame, episode_df: pd.DataFrame, depth_df: pd.D
             sub["search_concentration"],
             marker="s",
             linewidth=2.0,
-            label=planner,
+            label=DISPLAY_NAMES.get(planner, planner),
             color=palette.get(planner),
         )
     ax1.set_xscale("log", base=2)
@@ -271,7 +351,7 @@ def make_figures(plan_df: pd.DataFrame, episode_df: pd.DataFrame, depth_df: pd.D
     if not depth_df.empty:
         depth_summary = depth_df.groupby(["planner", "depth"], as_index=False).mean(numeric_only=True)
         plt.figure(figsize=(7.0, 4.2))
-        for planner in ["best_of_n", "uct_mcts", "uncertainty_mcts", "conservative_mcts"]:
+        for planner in ["static_rollout_pool", "uct_mcts", "uncertainty_mcts", "conservative_mcts"]:
             sub = depth_summary[depth_summary["planner"] == planner]
             if sub.empty:
                 continue
@@ -280,7 +360,7 @@ def make_figures(plan_df: pd.DataFrame, episode_df: pd.DataFrame, depth_df: pd.D
                 sub["reward_bias"],
                 marker="o",
                 linewidth=1.8,
-                label=planner,
+                label=DISPLAY_NAMES.get(planner, planner),
                 color=palette.get(planner),
             )
         plt.xlabel("Depth along selected plan")

@@ -7,9 +7,9 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from bonmcts.envs import Array, PointMassWorld
-from bonmcts.models import BiasedLearnedModel
-from bonmcts.planners import PlanResult
+from search_concentration_audit.envs import Array, PointMassWorld
+from search_concentration_audit.models import BiasedLearnedModel
+from search_concentration_audit.planners import PlanResult
 
 
 def evaluate_plan(
