@@ -45,3 +45,12 @@ The current implementation tests two practical variants:
 - Bias-pocket tests check that model optimism and uncertainty are both localized.
 - Full repeated-seed results are saved in `results/full/`.
 - Tail summaries and paired deltas are saved to expose whether any headline mean is driven by rare events.
+- `experiments/run_tail_stress.py` replays capture seeds, sweeps uncertainty penalties, and varies reward-bias strength.
+- `experiments/run_expansion_suite.py` adds exploration, horizon/budget, action-library, calibration, dynamics-drift, start-state, and closed-loop stress tests.
+- `experiments/run_claim_audit.py` generates pass/fail claim checks so the paper cannot silently drift into a dominance or benchmark claim.
+
+## Final Attack Result
+
+The strongest attack is that the main mean gap might be a fragile seed artifact. The tail-stress pass answers this by embracing the tail structure: UCT is worse on only a minority of seeds, but its maximum replayed branch-capture delta is large. A stronger uncertainty penalty collapses that maximum in the same seed set, and increasing the injected reward optimism increases the UCT maximum.
+
+The second strongest attack is that the repair story is too optimistic. The expansion suite answers by preserving a reduced-budget backfire case: a strong uncertainty penalty can redirect search into a larger selected-return gap even when the replayed capture seeds are repaired. The result remains a controlled mechanism claim, not a theorem for all MCTS planners or all uncertainty estimates.

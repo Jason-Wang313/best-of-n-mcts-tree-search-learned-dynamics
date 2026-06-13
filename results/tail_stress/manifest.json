@@ -1,0 +1,12 @@
+{
+  "claim_audit": "results\\tail_stress\\claim_audit.json",
+  "figures": [
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\tail_capture_replay.png",
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\uncertainty_penalty_sweep.png",
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\bias_strength_tail_stress.png"
+  ],
+  "metrics": "results\\tail_stress\\metrics.csv",
+  "paired_deltas": "results\\tail_stress\\paired_deltas.csv",
+  "strongest_result": "UCT max capture gap 7.021 versus strong uncertainty 0.430; penalty 2.40 q90 0.036; high-bias UCT max 8.903.",
+  "tail_summary": "results\\tail_stress\\tail_summary.csv"
+}

@@ -1,47 +1,33 @@
 # Final Audit
 
-## Status
+1. **Core thesis.** Adaptive tree search over learned dynamics can concentrate computation on local model optimism and create rare branch-capture events.
 
-Submission-oriented v2 repository prepared at:
+2. **What is new.** The paper is not a generic test-time-compute curve. It audits the allocation feedback loop in MCTS: optimistic branches receive more visits, backups, and model queries.
 
-`C:\Users\wangz\best of n mcts tree search learned dynamics`
+3. **V3 evidence added.** The tail-stress pass adds capture-seed replay, uncertainty-penalty sensitivity, and reward-bias-strength stress. The expansion suite adds exploration, horizon/budget, action-library, uncertainty-calibration, dynamics-drift, start-state, and closed-loop stress tests.
 
-## Verification Snapshot
+4. **Strongest caution.** The paired median is near zero and UCT is worse on only a minority of paired seeds. The claim must remain a branch-capture tail-risk claim, not a dominance claim.
 
-- Unit tests: `python -m pytest`
-- Smoke run: `python experiments\run_mechanism.py --mode smoke --output results\smoke`
-- Full run: `python experiments\run_mechanism.py --mode full --output results\full`
-- Paper build command: `.\scripts\build_paper.ps1`
+5. **Main remaining limitation.** The learned model is hand-designed; the next version should train a dynamics ensemble on biased data and evaluate on a standard continuous-control task.
 
-The paper build copies the PDF to `paper/final/iclr_submission.pdf`, Downloads, and the versioned Desktop artifact.
+6. **Final PDF location.** Expected repository path: `paper/final/best of n mcts tree search learned dynamics-v3.pdf`. Desktop publication is a post-verification step only.
 
-## Current Full-Run Result
+## Claim Status
 
-From `results/full/manifest.json`:
-
-`At budget 1024, mean selected-return optimism gap was 0.686 for UCT MCTS, 0.301 for the static rollout pool, and 0.236 for the best calibrated repair (Uncertainty MCTS). The paired UCT MCTS minus static delta had mean 0.386, median -0.000, positive fraction 0.20, and max 7.021.`
-
-This is now framed as a tail-risk result: adaptive UCT search has a larger mean gap and a larger worst branch-capture event under equal forward-model budget, but the paired evidence does not support a claim that UCT is worse on most seeds. Uncertainty-calibrated search lowers the mean gap and paired mean delta in this artifact.
-
-## Generated Artifacts
-
-- Full CSV/JSON outputs: `results/full/`
-- Smoke CSV/JSON outputs: `results/smoke/`
-- Tail and paired audit outputs:
-  - `results/full/tail_metrics.csv`
-  - `results/full/pairwise_deltas.csv`
-- Paper figures:
-  - `paper/figures/compute_scaling.png`
-  - `paper/figures/bias_amplification.png`
-  - `paper/figures/depth_bias_profile.png`
-- Expected final PDF:
-  - `paper/final/iclr_submission.pdf`
-  - `C:\Users\wangz\Downloads\iclr_submission_bon_mcts_dynamics.pdf`
-  - `C:\Users\wangz\OneDrive\Desktop\best of n mcts tree search learned dynamics-v2.pdf`
-
-## Remaining Risks
-
-- The empirical result is controlled-mechanism evidence from a hand-designed surrogate, not trained-model robotics evidence.
-- The repair is calibration-dependent.
-- The full-run result selects `uncertainty_mcts` as the strongest repair; conservative backup remains implemented but should be studied further before being foregrounded as uniformly superior.
-- The paired bootstrap interval should be treated as weak at 20 seeds; the manuscript avoids statistical-significance language.
+- `uct_mean_gap_exceeds_static_at_1024`: pass (0.3859 vs 0.2500)
+- `uct_tail_max_exceeds_static_at_1024`: pass (3.7208 vs 3.0000)
+- `paired_result_is_tail_not_dominance`: pass (0.2000 vs 0.2500)
+- `uncertainty_repair_reduces_mean_and_q90`: pass (0.4506 vs 0.3000)
+- `bias_strength_increases_uct_tail`: pass (6.3371 vs 5.0000)
+- `penalty_sweep_finds_low_tail_region`: pass (0.4305 vs 0.5000)
+- `strong_uncertainty_controls_high_bias_tail`: pass (8.3129 vs 6.0000)
+- `strong_uncertainty_penalty_reduces_capture_tail`: pass (6.5910 vs 6.0000)
+- `uct_tail_is_rare_not_dominance`: pass (7.0215 vs 5.0000)
+- `action_library_changes_tail_size`: pass (0.2313 vs 0.1000)
+- `calibration_sweep_finds_repair_backfire_case`: pass (5.6192 vs 1.0000)
+- `closed_loop_uncertainty_reduces_mean_plan_gap`: pass (1.0551 vs 0.0500)
+- `dynamics_drift_changes_tail_size`: pass (3.1003 vs 0.2500)
+- `exploration_constant_changes_tail_size`: pass (0.7312 vs 0.5000)
+- `horizon_budget_changes_tail_size`: pass (1.0907 vs 0.2500)
+- `start_state_changes_tail_exposure`: pass (11.5836 vs 0.2500)
+- `uncertainty_strength_alone_does_not_fix_backfire`: pass (0.0000 vs 0.2500)

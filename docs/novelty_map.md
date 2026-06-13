@@ -2,7 +2,7 @@
 
 ## One-Sentence Claim
 
-MCTS over learned dynamics can behave as a test-time optimizer that concentrates computation on localized model optimism, producing rare branch-capture tails that are visible against a static rollout-pool baseline and reducible by uncertainty-aware scoring in a controlled task.
+MCTS over learned dynamics can behave as a test-time optimizer that concentrates computation on localized model optimism, producing rare branch-capture tails that are visible against a static rollout-pool baseline; uncertainty-aware scoring can repair replayed capture events when calibrated, but can also backfire under reduced-budget stress.
 
 ## Positioning Against Closest Work
 
@@ -35,3 +35,15 @@ In the committed full controlled run (`results/full/manifest.json`), the largest
 - best calibrated repair (`uncertainty_mcts`) optimism gap: `0.236`.
 
 The paired UCT-minus-static delta has mean `0.386`, median near zero, positive fraction `0.20`, and max `7.021`. This supports a controlled branch-capture tail claim, not a claim that UCT is worse on most seeds. It does not yet establish the effect in high-dimensional robotics benchmarks.
+
+## Tail-Stress And Expansion Extensions
+
+The final pass adds `experiments/run_tail_stress.py` and `experiments/run_expansion_suite.py`, which make the tail claim much harder to attack:
+
+- Capture replay keeps the same 20 full-run seeds and shows the severe UCT events are concentrated in a small number of seeds, especially seeds 4 and 5.
+- Uncertainty-penalty sensitivity shows the original repair is not the only knob: penalty `2.40` reduces the max replayed capture gap from `7.021` to `0.430` and the 90th percentile to `0.036`.
+- Reward-bias-strength stress shows UCT max tail severity grows as the injected pocket optimism grows (`2.566` at zero reward bias to `8.903` at high reward bias), while the strong uncertainty penalty controls the high-bias tail.
+- The expansion suite adds exploration-constant, horizon/budget, action-library, uncertainty-calibration, dynamics-drift, start-state-geometry, and closed-loop stress tests.
+- The calibration slice deliberately keeps a repair-backfire case: the strong uncertainty penalty can produce a `5.772` maximum gap at budget `768` while UCT is benign on the same seeds. This prevents the paper from claiming uncertainty penalties are universally protective.
+
+This keeps the paper distinct from the other projects: the object of study is MCTS allocation feedback over a biased learned simulator, not generic independent candidate selection.

@@ -1,0 +1,86 @@
+{
+  "all_passed": true,
+  "claims": {
+    "bias_strength_increases_uct_tail": {
+      "description": "Increasing reward optimism in the pocket increases the UCT tail event size.",
+      "status": "pass",
+      "threshold": 5.0,
+      "value": 6.337127430389549
+    },
+    "penalty_sweep_finds_low_tail_region": {
+      "description": "The penalty sweep finds a low-tail region rather than relying on the original repair knob.",
+      "status": "pass",
+      "threshold": 0.5,
+      "value": 0.4304529693551391
+    },
+    "strong_uncertainty_controls_high_bias_tail": {
+      "description": "The strong uncertainty penalty controls the high-bias tail stress case.",
+      "status": "pass",
+      "threshold": 6.0,
+      "value": 8.312868154797945
+    },
+    "strong_uncertainty_penalty_reduces_capture_tail": {
+      "description": "A stronger uncertainty penalty collapses the largest UCT capture event.",
+      "status": "pass",
+      "threshold": 6.0,
+      "value": 6.591015168823793
+    },
+    "uct_tail_is_rare_not_dominance": {
+      "description": "UCT branch capture is a rare large-tail event, not paired-seed dominance.",
+      "status": "pass",
+      "threshold": 5.0,
+      "value": 7.021467681342628
+    }
+  },
+  "reference_values": {
+    "bias_0_uct": {
+      "max": 2.5662554177077013,
+      "mean": 0.4661569094150851,
+      "median": 7.609831957466895e-06,
+      "q90": 2.355759462365241
+    },
+    "bias_1_8_uct": {
+      "max": 8.90338284809725,
+      "mean": 1.3744108167217817,
+      "median": 7.437153472622526e-06,
+      "q90": 6.826649388480435
+    },
+    "bias_1_8_uncertainty_240": {
+      "max": 0.5905146932993048,
+      "mean": 0.10956251214560024,
+      "median": 0.0002944836366971515,
+      "q90": 0.3508902056050284
+    },
+    "capture_replay_static": {
+      "max": 3.3006853312056705,
+      "mean": 0.3005426482552517,
+      "median": 0.010579943083842025,
+      "q90": 0.5891673432873537
+    },
+    "capture_replay_uct": {
+      "max": 7.021468138178932,
+      "mean": 0.6864565804555947,
+      "median": 1.1912228650601264e-05,
+      "q90": 0.9718935728150879
+    },
+    "capture_replay_uncertainty_240": {
+      "max": 0.4304529693551391,
+      "mean": 0.030300759675134438,
+      "median": 8.533006777611263e-06,
+      "q90": 0.035695561314894736
+    },
+    "penalty_085": {
+      "max": 3.985826410424174,
+      "mean": 0.2358988915373165,
+      "median": 9.358689450067459e-06,
+      "q90": 0.15602793409492513
+    },
+    "penalty_240": {
+      "max": 0.4304529693551391,
+      "mean": 0.030300759675134438,
+      "median": 8.533006777611263e-06,
+      "q90": 0.035695561314894736
+    }
+  },
+  "summary": "UCT max capture gap 7.021 versus strong uncertainty 0.430; penalty 2.40 q90 0.036; high-bias UCT max 8.903."
+}

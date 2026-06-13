@@ -1,0 +1,20 @@
+{
+  "claim_audit": "results\\expansion\\claim_audit.json",
+  "figures": [
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\exploration_constant_sweep.png",
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\horizon_budget_sweep.png",
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\action_library_sweep.png",
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\uncertainty_miscalibration.png",
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\dynamics_drift_stress.png",
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\start_state_stress.png",
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\figures\\closed_loop_replay.png"
+  ],
+  "metrics": "results\\expansion\\metrics.csv",
+  "paired_deltas": "results\\expansion\\paired_deltas.csv",
+  "strongest_result": "Expansion suite: exploration max-gap range 0.731; horizon/budget max-gap range 1.091; calibration backfire gap 5.619; closed-loop mean-gap reduction 1.055.",
+  "summary": "results\\expansion\\summary.csv",
+  "tables": [
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\tables\\expansion_summary.csv",
+    "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\paper\\tables\\expansion_paired_deltas.csv"
+  ]
+}

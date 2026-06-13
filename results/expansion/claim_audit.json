@@ -1,0 +1,54 @@
+{
+  "all_passed": true,
+  "claims": {
+    "action_library_changes_tail_size": {
+      "description": "Changing the action library materially changes adaptive-search tail exposure.",
+      "status": "pass",
+      "threshold": 0.1,
+      "value": 0.2312780623997277
+    },
+    "calibration_sweep_finds_repair_backfire_case": {
+      "description": "The expansion sweep finds a reduced-budget counterexample to the broad claim that uncertainty penalties always help.",
+      "status": "pass",
+      "threshold": 1.0,
+      "value": 5.61918965137604
+    },
+    "closed_loop_uncertainty_reduces_mean_plan_gap": {
+      "description": "In receding-horizon replay, uncertainty-aware search lowers mean per-step planning optimism.",
+      "status": "pass",
+      "threshold": 0.05,
+      "value": 1.0550689465158074
+    },
+    "dynamics_drift_changes_tail_size": {
+      "description": "Changing transition drift toward the goal materially changes UCT tail optimism.",
+      "status": "pass",
+      "threshold": 0.25,
+      "value": 3.1002914311076246
+    },
+    "exploration_constant_changes_tail_size": {
+      "description": "UCT tail size is sensitive to the exploration constant rather than being a single fixed-parameter accident.",
+      "status": "pass",
+      "threshold": 0.5,
+      "value": 0.7311909918415829
+    },
+    "horizon_budget_changes_tail_size": {
+      "description": "Lookahead and budget materially change UCT branch-capture tail exposure.",
+      "status": "pass",
+      "threshold": 0.25,
+      "value": 1.0906706580066121
+    },
+    "start_state_changes_tail_exposure": {
+      "description": "Tail exposure depends on the geometric relationship between the start state and the bias pocket.",
+      "status": "pass",
+      "threshold": 0.25,
+      "value": 11.583566699075888
+    },
+    "uncertainty_strength_alone_does_not_fix_backfire": {
+      "description": "Changing only the uncertainty amplitude does not remove the reduced-budget penalty-induced capture case.",
+      "status": "pass",
+      "threshold": 0.25,
+      "value": 0.0
+    }
+  },
+  "summary": "Expansion suite: exploration max-gap range 0.731; horizon/budget max-gap range 1.091; calibration backfire gap 5.619; closed-loop mean-gap reduction 1.055."
+}

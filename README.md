@@ -16,8 +16,8 @@ The core thesis is narrow and testable: a static rollout pool scores independent
   - uncertainty-penalized MCTS,
   - conservative-backup MCTS.
 - Diagnostics for selected-return optimism gap, reward-bias exposure, transition error, uncertainty exposure, search concentration, depth-wise bias, tail quantiles, and paired seed deltas.
-- Reproducible smoke/full experiment scripts and generated CSV/JSON/PNG artifacts.
-- An ICLR-style paper source in `paper/`.
+- Reproducible smoke/full, tail-stress, and expansion-suite experiment scripts with generated CSV/JSON/PNG artifacts.
+- A 25-page ICLR-style paper source in `paper/`.
 
 ## Quick Start
 
@@ -26,6 +26,9 @@ python -m pip install -e .[dev]
 python -m pytest
 python experiments\run_mechanism.py --mode smoke --output results\smoke
 python experiments\run_mechanism.py --mode full --output results\full
+python experiments\run_tail_stress.py --output results\tail_stress
+python experiments\run_expansion_suite.py --output results\expansion
+python experiments\run_claim_audit.py
 .\scripts\build_paper.ps1
 ```
 
@@ -33,9 +36,15 @@ The committed full run currently reports:
 
 ```text
 At budget 1024, mean selected-return optimism gap was 0.686 for UCT MCTS,
-0.301 for the static rollout pool, and 0.236 for the best calibrated repair
+0.301 for the static rollout pool, and 0.236 for the original calibrated repair
 (Uncertainty MCTS). The paired UCT MCTS minus static delta had mean 0.386,
-median -0.000, positive fraction 0.20, and max 7.021.
+median -0.000, positive fraction 0.20, and max 7.021. The v3 tail-stress pass
+replays the capture seeds and finds that a stronger uncertainty penalty reduces
+the max capture gap from 7.021 to 0.430 while keeping the claim tail-specific.
+The expansion suite adds exploration, horizon/budget, action-library,
+uncertainty-calibration, dynamics-drift, start-state, and closed-loop stress
+tests. It also finds a reduced-budget repair-backfire case, so the paper keeps
+the uncertainty claim conditional rather than universal.
 ```
 
 ## Repository Map
@@ -45,10 +54,13 @@ median -0.000, positive fraction 0.20, and max 7.021.
 - `src/search_concentration_audit/planners.py`: static rollout and MCTS variants.
 - `src/search_concentration_audit/diagnostics.py`: rollout evaluation and aggregate metrics.
 - `experiments/run_mechanism.py`: smoke/full mechanism experiments and figure generation.
+- `experiments/run_tail_stress.py`: v3 capture replay, penalty sweep, and bias-strength stress tests.
+- `experiments/run_expansion_suite.py`: exploration, horizon/budget, action-library, calibration, dynamics, geometry, and closed-loop stress tests.
+- `experiments/run_claim_audit.py`: generated pass/fail audit for manuscript claims.
 - `tests/`: unit tests for dynamics, planner budgets, MCTS backup math, uncertainty behavior, and diagnostics.
 - `docs/`: novelty map, proof attack, claim audit, and final audit.
-- `paper/`: manuscript source, references, generated figures, and final PDF location.
+- `paper/`: manuscript source, references, generated figures, and final v3 PDF location.
 
 ## Scope
 
-This is controlled-mechanism evidence, not a claim of state-of-the-art robotics performance. The supported claim is tail-risk specific: adaptive search can create rare optimistic branch-capture events under a biased learned simulator, and uncertainty-aware scoring can reduce the observed tail when uncertainty is aligned with that bias.
+This is controlled-mechanism evidence, not a claim of state-of-the-art robotics performance. The supported claim is tail-risk specific: adaptive search can create rare optimistic branch-capture events under a biased learned simulator. Uncertainty-aware scoring can reduce the observed tail when uncertainty and penalty strength are calibrated, but the committed expansion suite also includes a counterexample where a strong penalty backfires.
