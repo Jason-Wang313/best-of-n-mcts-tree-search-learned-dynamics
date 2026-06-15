@@ -28,6 +28,7 @@ python experiments\run_mechanism.py --mode smoke --output results\smoke
 python experiments\run_mechanism.py --mode full --output results\full
 python experiments\run_tail_stress.py --output results\tail_stress
 python experiments\run_expansion_suite.py --output results\expansion
+python experiments\run_cliffwalking_benchmark.py --output results\cliffwalking_benchmark
 python experiments\run_claim_audit.py
 .\scripts\build_paper.ps1
 ```
@@ -44,7 +45,11 @@ the max capture gap from 7.021 to 0.430 while keeping the claim tail-specific.
 The expansion suite adds exploration, horizon/budget, action-library,
 uncertainty-calibration, dynamics-drift, start-state, and closed-loop stress
 tests. It also finds a reduced-budget repair-backfire case, so the paper keeps
-the uncertainty claim conditional rather than universal.
+the uncertainty claim conditional rather than universal. The v4 standard
+benchmark tier adds Gymnasium CliffWalking-v1: UCT amplifies the learned
+cliff-shortcut optimism gap by 165.38 relative to a behavioral static rollout
+pool, while uncertainty-penalized MCTS reduces the gap by 184.02 and improves
+true return by 166.82.
 ```
 
 ## Repository Map
@@ -56,11 +61,12 @@ the uncertainty claim conditional rather than universal.
 - `experiments/run_mechanism.py`: smoke/full mechanism experiments and figure generation.
 - `experiments/run_tail_stress.py`: v3 capture replay, penalty sweep, and bias-strength stress tests.
 - `experiments/run_expansion_suite.py`: exploration, horizon/budget, action-library, calibration, dynamics, geometry, and closed-loop stress tests.
+- `experiments/run_cliffwalking_benchmark.py`: Gymnasium CliffWalking-v1 standard tabular planning benchmark.
 - `experiments/run_claim_audit.py`: generated pass/fail audit for manuscript claims.
 - `tests/`: unit tests for dynamics, planner budgets, MCTS backup math, uncertainty behavior, and diagnostics.
 - `docs/`: novelty map, proof attack, claim audit, and final audit.
-- `paper/`: manuscript source, references, generated figures, and final v3 PDF location.
+- `paper/`: manuscript source, references, generated figures, and final v4 PDF location.
 
 ## Scope
 
-This is controlled-mechanism evidence, not a claim of state-of-the-art robotics performance. The supported claim is tail-risk specific: adaptive search can create rare optimistic branch-capture events under a biased learned simulator. Uncertainty-aware scoring can reduce the observed tail when uncertainty and penalty strength are calibrated, but the committed expansion suite also includes a counterexample where a strong penalty backfires.
+This is controlled-mechanism evidence plus a standard tabular planning benchmark, not a claim of state-of-the-art robotics performance. The supported claim is tail-risk specific: adaptive search can create rare optimistic branch-capture events under a biased learned simulator. Uncertainty-aware scoring can reduce the observed tail when uncertainty and penalty strength are calibrated, but the committed expansion suite also includes a counterexample where a strong penalty backfires.

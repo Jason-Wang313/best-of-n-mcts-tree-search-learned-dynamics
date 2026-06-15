@@ -10,7 +10,7 @@
 \usepackage{url}
 
 \graphicspath{{figures/}}
-\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+\hypersetup{colorlinks=true, linkcolor=blue!55!black, citecolor=green!45!black, urlcolor=blue!55!black}
 
 \newcommand{\gap}{\Delta_{\mathrm{opt}}}
 \newcommand{\modelret}{\hat G}
@@ -26,7 +26,7 @@
 \maketitle
 
 \begin{abstract}
-Tree search over learned dynamics is often treated as a clean way to spend more test-time computation. This paper audits a narrower and more dangerous possibility: adaptive tree expansion can concentrate model queries on a locally optimistic error, turning a learned simulator into its own adversarial objective. We construct a deterministic two-dimensional control audit with a known off-route bias pocket, compare static rollout selection, UCT MCTS, value-guided MCTS, uncertainty-penalized MCTS, and conservative-backup MCTS under equal forward-model budgets, and commit every numerical claim to generated CSV/JSON artifacts. The result is a tail-risk finding rather than a dominance claim. At budget 1024, UCT has a larger mean selected-return optimism gap than the static rollout pool (0.686 versus 0.301) and a larger worst branch-capture event (7.021 versus 3.301), but the paired median delta is approximately zero and UCT is worse on only 20\% of paired seeds. A tail-stress suite replays the capture seeds, sweeps uncertainty penalties, and varies reward optimism; a strong uncertainty penalty collapses the largest replayed UCT event from 7.021 to 0.430. A second expansion suite attacks the claim from seven additional angles: exploration constants, horizon and budget, action libraries, uncertainty calibration, dynamics drift, start-state geometry, and receding-horizon replay. The same expansion suite also finds a reduced-budget counterexample where uncertainty penalization backfires, so the final claim is deliberately conditional: uncertainty can repair search concentration when its signal is aligned and the penalty is calibrated, but it is not a general guarantee.
+Tree search over learned dynamics is often treated as a clean way to spend more test-time computation. This paper audits a narrower and more dangerous possibility: adaptive tree expansion can concentrate model queries on a locally optimistic error, turning a learned simulator into its own adversarial objective. We construct a deterministic two-dimensional control audit with a known off-route bias pocket, compare static rollout selection, UCT MCTS, value-guided MCTS, uncertainty-penalized MCTS, and conservative-backup MCTS under equal forward-model budgets, and commit every numerical claim to generated CSV/JSON artifacts. The result is a tail-risk finding rather than a dominance claim. At budget 1024, UCT has a larger mean selected-return optimism gap than the static rollout pool (0.686 versus 0.301) and a larger worst branch-capture event (7.021 versus 3.301), but the paired median delta is approximately zero and UCT is worse on only 20\% of paired seeds. A tail-stress suite replays the capture seeds, sweeps uncertainty penalties, and varies reward optimism; a strong uncertainty penalty collapses the largest replayed UCT event from 7.021 to 0.430. A second expansion suite attacks the claim from seven additional angles: exploration constants, horizon and budget, action libraries, uncertainty calibration, dynamics drift, start-state geometry, and receding-horizon replay. The v4 standard benchmark tier adds Gymnasium CliffWalking-v1 with a biased learned transition table: UCT amplifies the learned cliff-shortcut optimism gap by \(165.38\) relative to a behavioral static rollout pool, while uncertainty-penalized MCTS reduces the gap by \(184.02\) and improves true return by \(166.82\). The final claim is deliberately conditional: uncertainty can repair search concentration when its signal is aligned and the penalty is calibrated, but it is not a general guarantee.
 \end{abstract}
 
 \section{Introduction}
@@ -53,6 +53,7 @@ The contributions are:
 \item A comparison between static rollout selection and several MCTS variants under identical forward-model budgets, with tail quantiles and paired-seed deltas rather than only means.
 \item A tail-stress suite that replays branch-capture seeds, sweeps uncertainty penalties, and varies reward-bias severity.
 \item A seven-angle expansion suite covering exploration constants, horizon and budget, action-library granularity, uncertainty calibration, transition drift, start-state geometry, and receding-horizon replay.
+\item A Gymnasium CliffWalking-v1 benchmark \citep{towers2024gymnasium} showing the same learned-shortcut failure under a standard tabular planning environment with an exact true transition table.
 \item A generated claim audit that marks every manuscript-level claim pass/fail and explicitly includes a repair-backfire counterexample.
 \end{itemize}
 
@@ -562,11 +563,46 @@ Conservative MCTS & 0.048 & -5.271 \\
 \end{center}
 \end{table}
 
+\section{Gymnasium CliffWalking Benchmark}
+
+The controlled point-mass audit isolates the allocation mechanism, but a standard benchmark tier is needed before the paper is submission-facing. We therefore add Gymnasium CliffWalking-v1 \citep{towers2024gymnasium}. The true environment is the exact Gymnasium transition table. The learned model is biased in one specific way: it treats the cliff row as a safe shortcut with positive reward and a transition along the row, while the true environment resets the agent to the start with a \(-100\) penalty. This is a deliberately harsh learned-dynamics error, but it is domain-aligned: cliff entry is exactly the boundary where a model-based planner should be conservative.
+
+The benchmark compares a behavioral static rollout pool, a uniform static pool negative control, UCT MCTS, uncertainty-penalized MCTS, and MCTS using the true transition table. The behavioral static pool samples independent safe-prior rollouts and scores them under the same biased learned model; it is the non-adaptive comparator. The uniform static pool is retained as an adversarial control because random open-loop sequences can also overexploit the bad model. The final protocol uses seeds 40--59, horizon 16, and budgets \(32,64,128,256\).
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[width=\linewidth]{cliffwalking_benchmark.png}
+\end{center}
+\caption{Gymnasium CliffWalking-v1 standard benchmark. UCT concentrates on the learned cliff shortcut, producing large selected-return optimism and poor true return. Uncertainty-penalized MCTS avoids the shortcut. Uniform static rollout is shown as a negative control: independent random proposals can also exploit a bad model, but the behavioral static pool is the fair non-adaptive baseline.}
+\label{fig:cliffwalking}
+\end{figure}
+
+\begin{table}[t]
+\caption{CliffWalking-v1 effects at budget 256, mean with bootstrap 95\% interval. Positive values are worse for gap and shortcut exposure but better for true-return improvement.}
+\label{tab:cliffwalking}
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+Effect & Mean \([95\%\ \mathrm{CI}]\) \\
+\midrule
+UCT minus behavioral static optimism gap & \(165.38\ [129.74,201.69]\) \\
+Uncertainty MCTS minus UCT optimism gap & \(-184.02\ [-220.07,-151.71]\) \\
+Uncertainty MCTS minus UCT true return & \(166.82\ [136.97,201.18]\) \\
+UCT minus behavioral static shortcut exposure & \(3.55\ [3.00,4.05]\) \\
+Uncertainty MCTS minus UCT shortcut exposure & \(-3.65\ [-4.15,-3.05]\) \\
+True-model UCT optimism gap & \(0.00\ [0.00,0.00]\) \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+The benchmark sharpens the paper's scope. It does not claim that every static rollout pool is safe: the uniform static negative control also overexploits the learned shortcut. It does show that adaptive UCT can amplify a learned shortcut relative to a safe-prior non-adaptive pool, and that a public uncertainty penalty can remove that failure when the uncertainty signal identifies the model's shortcut region. The true-model UCT control has zero selected-return optimism gap, so the failure is not an artifact of CliffWalking itself; it is a learned-model planning error.
+
 \section{What The Paper Does Not Claim}
 
 The claim audit is as important as the positive results. The paper does not claim that MCTS is generally unsafe, that static rollout is always safer, that uncertainty estimates are automatically calibrated, or that the point-mass artifact predicts high-dimensional robotics regret. It also does not claim that selected-return optimism is the only relevant metric. True task return matters, and the closed-loop replay shows that lower optimism can trade off with goal progress.
 
-The paper instead claims that a specific mechanism exists and can be audited: adaptive tree search over a biased learned model can create rare branch-capture events by reallocating computation toward local optimism. This claim is supported by the full-run tail slice, paired deltas, replayed capture seeds, reward-bias stress, dynamics-drift stress, and geometry stress. The repair claim is narrower: uncertainty-aware search can collapse a replayed capture event when the uncertainty signal and penalty are well aligned, but the expansion suite finds a counterexample to any unconditional repair guarantee.
+The paper instead claims that a specific mechanism exists and can be audited: adaptive tree search over a biased learned model can create branch-capture events by reallocating computation toward local optimism. This claim is supported by the full-run tail slice, paired deltas, replayed capture seeds, reward-bias stress, dynamics-drift stress, geometry stress, and the CliffWalking-v1 benchmark. The repair claim is narrower: uncertainty-aware search can collapse a replayed capture event when the uncertainty signal and penalty are well aligned, but the expansion suite finds a counterexample to any unconditional repair guarantee.
 
 \section{Limitations}
 
@@ -594,6 +630,7 @@ python -m pytest
 python experiments\run_mechanism.py --mode full
 python experiments\run_tail_stress.py
 python experiments\run_expansion_suite.py
+python experiments\run_cliffwalking_benchmark.py
 python experiments\run_claim_audit.py
 .\scripts\build_paper.ps1
 \end{verbatim}
@@ -601,7 +638,7 @@ The build script writes the final PDF under \path{paper/final/}. The generated c
 
 \section{Conclusion}
 
-Adaptive search is powerful because it spends computation where the model says value is high. That same feedback loop becomes a liability when the model is locally optimistic. This paper turns that liability into a concrete audit: compare static rollout selection to adaptive tree search under equal model budgets, replay the selected sequence in the true world, and inspect not only means but paired deltas and tail events. The resulting evidence supports a narrow but important conclusion. Learned-dynamics tree planning can create rare search-concentration failures, and uncertainty-aware repairs can help only when calibrated to the relevant error region. A submission-ready evaluation of learned-model planners should therefore include tail-risk audits, repair backfire tests, and explicit claim ledgers, not just average return curves.
+Adaptive search is powerful because it spends computation where the model says value is high. That same feedback loop becomes a liability when the model is locally optimistic. This paper turns that liability into a concrete audit: compare static rollout selection to adaptive tree search under equal model budgets, replay the selected sequence in the true world, and inspect not only means but paired deltas, tail events, and standard benchmark stress cases. The resulting evidence supports a narrow but important conclusion. Learned-dynamics tree planning can create search-concentration failures, and uncertainty-aware repairs can help only when calibrated to the relevant error region. A submission-ready evaluation of learned-model planners should therefore include tail-risk audits, standard-environment shortcut tests, repair backfire tests, and explicit claim ledgers, not just average return curves.
 
 \clearpage
 \bibliographystyle{iclr2026_conference}
@@ -659,6 +696,26 @@ Closed-loop uncertainty reduces mean plan gap & 1.055 & \(>0.050\) \\
 \end{center}
 \end{table}
 
+\begin{table}[htbp]
+\caption{Claim ledger, part 3: Gymnasium CliffWalking-v1 benchmark.}
+\label{tab:claim-ledger-c}
+\begin{center}
+\small
+\begin{tabular}{p{0.46\linewidth}rr}
+\toprule
+Claim & Value & Threshold \\
+\midrule
+Cliff UCT gap exceeds behavioral static & 165.380 & \(>50.000\) \\
+Cliff uncertainty reduces gap & -184.018 & \(<-100.000\) \\
+Cliff uncertainty improves true return & 166.822 & \(>100.000\) \\
+Cliff UCT increases shortcut exposure & 3.550 & \(>2.000\) \\
+Cliff uncertainty avoids shortcut & -3.650 & \(<-2.000\) \\
+True-model UCT has low gap & 0.000 & \(<1.000\) \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
 \section{Branch-Capture Seeds}
 
 \begin{table}[htbp]
@@ -706,7 +763,7 @@ The tail-stress and expansion suites call the same evaluation routine. This is i
 
 \section{Resource Discipline}
 
-The experiments were designed to be large enough to attack the claim but small enough not to monopolize CPU or memory. The full run uses 20 seeds over five budgets. The tail-stress suite uses 20-seed replay for the main capture and smaller grids for reward-bias stress. The expansion suite uses compact seed grids and budget 768 for most stress families. Every run stores row-level CSV files and releases planner objects after each call. No experiment stores all simulated states, tree nodes, or rollouts in memory across the full suite.
+The experiments were designed to be large enough to attack the claim but small enough not to monopolize CPU or memory. The full run uses 20 seeds over five budgets. The tail-stress suite uses 20-seed replay for the main capture and smaller grids for reward-bias stress. The expansion suite uses compact seed grids and budget 768 for most stress families. The CliffWalking benchmark is tabular and stores only selected-sequence rows. Every run stores row-level CSV files and releases planner objects after each call. No experiment stores all simulated states, tree nodes, or rollouts in memory across the full suite.
 
 This resource discipline is part of the submission story. A reviewer should be able to rerun the artifact on an ordinary machine and inspect the generated claim audit. The paper therefore prioritizes reproducible stress breadth over a single massive run that would be hard to verify.
 
@@ -749,8 +806,8 @@ Optimism gap is not true return. & The closed-loop section explicitly separates 
 \section{Artifact Map}
 
 \begin{center}
-\small
-\begin{tabular}{p{0.38\linewidth}p{0.48\linewidth}}
+\footnotesize
+\begin{tabular}{p{0.46\linewidth}p{0.40\linewidth}}
 \toprule
 Path & Role \\
 \midrule
@@ -760,20 +817,22 @@ Path & Role \\
 \path{run_mechanism.py} & Full mechanism experiment \\
 \path{run_tail_stress.py} & Capture replay, penalty sweep, reward-bias stress \\
 \path{run_expansion_suite.py} & Seven-angle expansion suite \\
+\path{run_cliffwalking_benchmark.py} & Gymnasium CliffWalking-v1 benchmark \\
 \path{run_claim_audit.py} & Combined generated claim ledger \\
 \path{results/full/} & Full-run CSV/JSON outputs \\
 \path{results/tail_stress/} & Tail-stress CSV/JSON outputs \\
 \path{results/expansion/} & Expansion-suite CSV/JSON outputs \\
+\path{results/cliffwalking_benchmark/} & Standard benchmark CSV/JSON outputs \\
 \path{paper/figures/} & Generated figures used in the manuscript \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\section{Future Benchmark Extension}
+\section{Future Trained-Model Benchmark Extension}
 
-A direct benchmark extension should keep the audit structure rather than replacing it with a single return table. A minimal next experiment would train an ensemble dynamics model on off-policy data, run static rollout and MCTS under equal model-query budgets, compute selected-return optimism using environment rollouts, and include uncertainty backfire tests. The environment should include at least one continuous-control task where the data distribution leaves a plausible off-route region. The report should include paired deltas, capture-seed replays, calibration sweeps, and negative controls where the uncertainty signal is intentionally miscalibrated.
+A direct trained-model benchmark extension should keep the audit structure rather than replacing it with a single return table. A minimal next experiment would train an ensemble dynamics model on off-policy data, run static rollout and MCTS under equal model-query budgets, compute selected-return optimism using environment rollouts, and include uncertainty backfire tests. The environment should include at least one continuous-control task where the data distribution leaves a plausible off-route region. The report should include paired deltas, capture-seed replays, calibration sweeps, and negative controls where the uncertainty signal is intentionally miscalibrated.
 
-This extension would answer a different question from the present paper. The present paper asks whether the mechanism exists and how to audit it. A benchmark extension would ask how often the mechanism matters in trained models and whether repair techniques improve downstream control reliably.
+This extension would answer a different question from the present paper. The present paper asks whether the mechanism exists, verifies it in a standard tabular benchmark, and shows how to audit it. A trained continuous-control extension would ask how often the mechanism matters in learned models and whether repair techniques improve downstream control reliably.
 
 \section{Complete Budget Diagnostics}
 

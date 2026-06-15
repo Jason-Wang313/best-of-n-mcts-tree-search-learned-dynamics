@@ -19,6 +19,42 @@
       "threshold": 1.0,
       "value": 5.61918965137604
     },
+    "cliff_true_model_has_low_gap": {
+      "description": "MCTS with the true Gymnasium transition table must have near-zero selected-return optimism gap.",
+      "status": "pass",
+      "threshold": 1.0,
+      "value": 0.0
+    },
+    "cliff_uct_concentrates_on_shortcut": {
+      "description": "UCT MCTS must expose the learned cliff-shortcut bias more than the behavioral static pool.",
+      "status": "pass",
+      "threshold": 2.0,
+      "value": 3.55
+    },
+    "cliff_uct_gap_exceeds_static": {
+      "description": "On Gymnasium CliffWalking-v1, UCT MCTS must amplify learned shortcut optimism relative to a behavioral static rollout pool.",
+      "status": "pass",
+      "threshold": 50.0,
+      "value": 165.379633571217
+    },
+    "cliff_uncertainty_avoids_shortcut": {
+      "description": "Uncertainty-penalized MCTS must reduce learned cliff-shortcut exposure.",
+      "status": "pass",
+      "threshold": -2.0,
+      "value": -3.65
+    },
+    "cliff_uncertainty_improves_true_return": {
+      "description": "Uncertainty-penalized MCTS must improve true CliffWalking return over UCT.",
+      "status": "pass",
+      "threshold": 100.0,
+      "value": 166.82240520000005
+    },
+    "cliff_uncertainty_reduces_gap": {
+      "description": "Uncertainty-penalized MCTS must reduce the CliffWalking selected-return optimism gap.",
+      "status": "pass",
+      "threshold": -100.0,
+      "value": -184.018105537023
+    },
     "closed_loop_uncertainty_reduces_mean_plan_gap": {
       "description": "In receding-horizon replay, uncertainty-aware search lowers mean per-step planning optimism.",
       "status": "pass",
@@ -104,6 +140,7 @@
       "value": 0.0
     }
   },
+  "cliffwalking_dir": "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\results\\cliffwalking_benchmark",
   "expansion_dir": "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\results\\expansion",
   "full_dir": "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\results\\full",
   "stress_dir": "C:\\Users\\wangz\\best of n mcts tree search learned dynamics\\results\\tail_stress"

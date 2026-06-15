@@ -6,6 +6,7 @@ The paper should only make claims whose checks pass here.
 - Full results dir: `C:\Users\wangz\best of n mcts tree search learned dynamics\results\full`
 - Tail-stress dir: `C:\Users\wangz\best of n mcts tree search learned dynamics\results\tail_stress`
 - Expansion dir: `C:\Users\wangz\best of n mcts tree search learned dynamics\results\expansion`
+- CliffWalking benchmark dir: `C:\Users\wangz\best of n mcts tree search learned dynamics\results\cliffwalking_benchmark`
 - All claims passed: `True`
 
 | Claim | Status | Value | Threshold | Meaning |
@@ -27,3 +28,9 @@ The paper should only make claims whose checks pass here.
 | `horizon_budget_changes_tail_size` | pass | 1.0907 | 0.2500 | Lookahead and budget materially change UCT branch-capture tail exposure. |
 | `start_state_changes_tail_exposure` | pass | 11.5836 | 0.2500 | Tail exposure depends on the geometric relationship between the start state and the bias pocket. |
 | `uncertainty_strength_alone_does_not_fix_backfire` | pass | 0.0000 | 0.2500 | Changing only the uncertainty amplitude does not remove the reduced-budget penalty-induced capture case. |
+| `cliff_uct_gap_exceeds_static` | pass | 165.3796 | 50.0000 | On Gymnasium CliffWalking-v1, UCT MCTS must amplify learned shortcut optimism relative to a behavioral static rollout pool. |
+| `cliff_uncertainty_reduces_gap` | pass | -184.0181 | -100.0000 | Uncertainty-penalized MCTS must reduce the CliffWalking selected-return optimism gap. |
+| `cliff_uncertainty_improves_true_return` | pass | 166.8224 | 100.0000 | Uncertainty-penalized MCTS must improve true CliffWalking return over UCT. |
+| `cliff_uct_concentrates_on_shortcut` | pass | 3.5500 | 2.0000 | UCT MCTS must expose the learned cliff-shortcut bias more than the behavioral static pool. |
+| `cliff_uncertainty_avoids_shortcut` | pass | -3.6500 | -2.0000 | Uncertainty-penalized MCTS must reduce learned cliff-shortcut exposure. |
+| `cliff_true_model_has_low_gap` | pass | 0.0000 | 1.0000 | MCTS with the true Gymnasium transition table must have near-zero selected-return optimism gap. |

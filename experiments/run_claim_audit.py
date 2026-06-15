@@ -16,6 +16,7 @@ if str(SRC) not in sys.path:
 
 from experiments.run_mechanism import run as run_mechanism
 from experiments.run_expansion_suite import run_expansion_suite
+from experiments.run_cliffwalking_benchmark import run_cliffwalking_benchmark
 from experiments.run_tail_stress import run_tail_stress
 from search_concentration_audit.diagnostics import write_json
 
@@ -44,6 +45,7 @@ def _paired_row(pairwise: pd.DataFrame, *, planner: str, budget: int = 1024) -> 
 
 
 def audit_claims(*, full_dir: Path, stress_dir: Path, expansion_dir: Path, output: Path) -> dict:
+    cliff_dir = ROOT / "results" / "cliffwalking_benchmark"
     required_full = [full_dir / "tail_metrics.csv", full_dir / "pairwise_deltas.csv", full_dir / "manifest.json"]
     if any(not path.exists() for path in required_full):
         run_mechanism("full", full_dir)
@@ -51,11 +53,14 @@ def audit_claims(*, full_dir: Path, stress_dir: Path, expansion_dir: Path, outpu
         run_tail_stress(output=stress_dir)
     if not (expansion_dir / "claim_audit.json").exists():
         run_expansion_suite(output=expansion_dir)
+    if not (cliff_dir / "aggregate.json").exists():
+        run_cliffwalking_benchmark(output=cliff_dir)
 
     tail = pd.read_csv(full_dir / "tail_metrics.csv")
     pairwise = pd.read_csv(full_dir / "pairwise_deltas.csv")
     stress = json.loads((stress_dir / "claim_audit.json").read_text(encoding="utf-8"))
     expansion = json.loads((expansion_dir / "claim_audit.json").read_text(encoding="utf-8"))
+    cliff = json.loads((cliff_dir / "aggregate.json").read_text(encoding="utf-8"))
 
     static = _tail_row(tail, planner="static_rollout_pool")
     uct = _tail_row(tail, planner="uct_mcts")
@@ -91,10 +96,59 @@ def audit_claims(*, full_dir: Path, stress_dir: Path, expansion_dir: Path, outpu
     }
     claims.update(stress["claims"])
     claims.update(expansion["claims"])
+    claims.update(
+        {
+            name: _claim(
+                bool(cliff["claims"][name]),
+                float(cliff["summary"][summary_key]["mean"]),
+                threshold,
+                description,
+            )
+            for name, summary_key, threshold, description in [
+                (
+                    "cliff_uct_gap_exceeds_static",
+                    "uct_minus_static_gap_ci",
+                    50.0,
+                    "On Gymnasium CliffWalking-v1, UCT MCTS must amplify learned shortcut optimism relative to a behavioral static rollout pool.",
+                ),
+                (
+                    "cliff_uncertainty_reduces_gap",
+                    "uncertainty_minus_uct_gap_ci",
+                    -100.0,
+                    "Uncertainty-penalized MCTS must reduce the CliffWalking selected-return optimism gap.",
+                ),
+                (
+                    "cliff_uncertainty_improves_true_return",
+                    "uncertainty_minus_uct_return_ci",
+                    100.0,
+                    "Uncertainty-penalized MCTS must improve true CliffWalking return over UCT.",
+                ),
+                (
+                    "cliff_uct_concentrates_on_shortcut",
+                    "uct_minus_static_cliff_bias_ci",
+                    2.0,
+                    "UCT MCTS must expose the learned cliff-shortcut bias more than the behavioral static pool.",
+                ),
+                (
+                    "cliff_uncertainty_avoids_shortcut",
+                    "uncertainty_minus_uct_cliff_bias_ci",
+                    -2.0,
+                    "Uncertainty-penalized MCTS must reduce learned cliff-shortcut exposure.",
+                ),
+                (
+                    "cliff_true_model_has_low_gap",
+                    "true_model_uct_gap_ci",
+                    1.0,
+                    "MCTS with the true Gymnasium transition table must have near-zero selected-return optimism gap.",
+                ),
+            ]
+        }
+    )
     payload = {
         "full_dir": str(full_dir),
         "stress_dir": str(stress_dir),
         "expansion_dir": str(expansion_dir),
+        "cliffwalking_dir": str(cliff_dir),
         "all_passed": all(item["status"] == "pass" for item in claims.values()),
         "claims": claims,
     }
@@ -114,6 +168,7 @@ def _write_claim_markdown(payload: dict) -> None:
         f"- Full results dir: `{payload['full_dir']}`",
         f"- Tail-stress dir: `{payload['stress_dir']}`",
         f"- Expansion dir: `{payload['expansion_dir']}`",
+        f"- CliffWalking benchmark dir: `{payload['cliffwalking_dir']}`",
         f"- All claims passed: `{payload['all_passed']}`",
         "",
         "| Claim | Status | Value | Threshold | Meaning |",
@@ -140,11 +195,13 @@ def _write_final_audit(payload: dict) -> None:
         "",
         "3. **V3 evidence added.** The tail-stress pass adds capture-seed replay, uncertainty-penalty sensitivity, and reward-bias-strength stress. The expansion suite adds exploration, horizon/budget, action-library, uncertainty-calibration, dynamics-drift, start-state, and closed-loop stress tests.",
         "",
-        "4. **Strongest caution.** The paired median is near zero and UCT is worse on only a minority of paired seeds. The claim must remain a branch-capture tail-risk claim, not a dominance claim.",
+        "4. **V4 benchmark evidence.** Gymnasium CliffWalking-v1 is now included as a standard tabular planning benchmark. The biased learned model treats the cliff row as a shortcut; UCT concentrates on that learned shortcut, while uncertainty-penalized MCTS repairs the selected-return gap and true return.",
         "",
-        "5. **Main remaining limitation.** The learned model is hand-designed; the next version should train a dynamics ensemble on biased data and evaluate on a standard continuous-control task.",
+        "5. **Strongest caution.** The paired median in the point-mass run is near zero and UCT is worse on only a minority of paired seeds. The claim must remain a branch-capture tail-risk claim, not a dominance claim.",
         "",
-        "6. **Final PDF location.** Expected repository path: `paper/final/best of n mcts tree search learned dynamics-v3.pdf`. Desktop publication is a post-verification step only.",
+        "6. **Main remaining limitation.** The learned models are hand-designed; the next version should train a dynamics ensemble on biased data and evaluate on continuous-control benchmarks.",
+        "",
+        "7. **Final PDF location.** Expected repository path: `paper/final/best of n mcts tree search learned dynamics-v4.pdf`. Desktop publication is a post-verification step only.",
         "",
         "## Claim Status",
         "",

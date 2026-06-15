@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 $Root = Resolve-Path (Join-Path $PSScriptRoot "..")
 $PaperDir = Join-Path $Root "paper"
 $FinalDir = Join-Path $PaperDir "final"
-$RepoPdf = Join-Path $FinalDir "best of n mcts tree search learned dynamics-v3.pdf"
+$RepoPdf = Join-Path $FinalDir "best of n mcts tree search learned dynamics-v4.pdf"
 
 New-Item -ItemType Directory -Force $FinalDir | Out-Null
 

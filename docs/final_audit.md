@@ -6,11 +6,13 @@
 
 3. **V3 evidence added.** The tail-stress pass adds capture-seed replay, uncertainty-penalty sensitivity, and reward-bias-strength stress. The expansion suite adds exploration, horizon/budget, action-library, uncertainty-calibration, dynamics-drift, start-state, and closed-loop stress tests.
 
-4. **Strongest caution.** The paired median is near zero and UCT is worse on only a minority of paired seeds. The claim must remain a branch-capture tail-risk claim, not a dominance claim.
+4. **V4 benchmark evidence.** Gymnasium CliffWalking-v1 is now included as a standard tabular planning benchmark. The biased learned model treats the cliff row as a shortcut; UCT concentrates on that learned shortcut, while uncertainty-penalized MCTS repairs the selected-return gap and true return.
 
-5. **Main remaining limitation.** The learned model is hand-designed; the next version should train a dynamics ensemble on biased data and evaluate on a standard continuous-control task.
+5. **Strongest caution.** The paired median in the point-mass run is near zero and UCT is worse on only a minority of paired seeds. The claim must remain a branch-capture tail-risk claim, not a dominance claim.
 
-6. **Final PDF location.** Expected repository path: `paper/final/best of n mcts tree search learned dynamics-v3.pdf`. Desktop publication is a post-verification step only.
+6. **Main remaining limitation.** The learned models are hand-designed; the next version should train a dynamics ensemble on biased data and evaluate on continuous-control benchmarks.
+
+7. **Final PDF location.** Expected repository path: `paper/final/best of n mcts tree search learned dynamics-v4.pdf`. Desktop publication is a post-verification step only.
 
 ## Claim Status
 
@@ -31,3 +33,9 @@
 - `horizon_budget_changes_tail_size`: pass (1.0907 vs 0.2500)
 - `start_state_changes_tail_exposure`: pass (11.5836 vs 0.2500)
 - `uncertainty_strength_alone_does_not_fix_backfire`: pass (0.0000 vs 0.2500)
+- `cliff_uct_gap_exceeds_static`: pass (165.3796 vs 50.0000)
+- `cliff_uncertainty_reduces_gap`: pass (-184.0181 vs -100.0000)
+- `cliff_uncertainty_improves_true_return`: pass (166.8224 vs 100.0000)
+- `cliff_uct_concentrates_on_shortcut`: pass (3.5500 vs 2.0000)
+- `cliff_uncertainty_avoids_shortcut`: pass (-3.6500 vs -2.0000)
+- `cliff_true_model_has_low_gap`: pass (0.0000 vs 1.0000)
