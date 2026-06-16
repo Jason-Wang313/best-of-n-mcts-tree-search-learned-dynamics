@@ -17,7 +17,7 @@ The core thesis is narrow and testable: a static rollout pool scores independent
   - conservative-backup MCTS.
 - Diagnostics for selected-return optimism gap, reward-bias exposure, transition error, uncertainty exposure, search concentration, depth-wise bias, tail quantiles, and paired seed deltas.
 - Reproducible smoke/full, tail-stress, and expansion-suite experiment scripts with generated CSV/JSON/PNG artifacts.
-- A 25-page ICLR-style paper source in `paper/`.
+- An ICLR-style paper source in `paper/`.
 
 ## Quick Start
 
@@ -30,7 +30,7 @@ python experiments\run_tail_stress.py --output results\tail_stress
 python experiments\run_expansion_suite.py --output results\expansion
 python experiments\run_cliffwalking_benchmark.py --output results\cliffwalking_benchmark
 python experiments\run_claim_audit.py
-.\scripts\build_paper.ps1
+.\scripts\build_paper.ps1 -DesktopCopy "C:\Users\wangz\OneDrive\Desktop\best of n mcts tree search learned dynamics-v4.pdf"
 ```
 
 The committed full run currently reports:

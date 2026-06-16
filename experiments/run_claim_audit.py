@@ -201,7 +201,7 @@ def _write_final_audit(payload: dict) -> None:
         "",
         "6. **Main remaining limitation.** The learned models are hand-designed; the next version should train a dynamics ensemble on biased data and evaluate on continuous-control benchmarks.",
         "",
-        "7. **Final PDF location.** Expected repository path: `paper/final/best of n mcts tree search learned dynamics-v4.pdf`. Desktop publication is a post-verification step only.",
+        "7. **Final PDF location.** Expected repository path: `paper/final/best of n mcts tree search learned dynamics-v4.pdf`. The visible Desktop copy is produced with `scripts\\build_paper.ps1 -DesktopCopy` after verification.",
         "",
         "## Claim Status",
         "",

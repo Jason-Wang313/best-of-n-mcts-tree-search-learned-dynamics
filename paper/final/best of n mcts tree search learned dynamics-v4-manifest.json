@@ -1,0 +1,49 @@
+{
+  "paper_name": "Search-Concentration Audits for Learned-Dynamics Tree Planning",
+  "desktop_pdf_name": "best of n mcts tree search learned dynamics-v4.pdf",
+  "version": "v4",
+  "verified_on": "2026-06-16",
+  "source_folder": "C:/Users/wangz/best of n mcts tree search learned dynamics",
+  "folder_name_source_of_truth": "best of n mcts tree search learned dynamics",
+  "github_repository": "Jason-Wang313/best-of-n-mcts-tree-search-learned-dynamics",
+  "github_remote": "https://github.com/Jason-Wang313/best-of-n-mcts-tree-search-learned-dynamics.git",
+  "repo_pdf": "paper/final/best of n mcts tree search learned dynamics-v4.pdf",
+  "desktop_pdf": "C:/Users/wangz/OneDrive/Desktop/best of n mcts tree search learned dynamics-v4.pdf",
+  "pdf_sha256": "FDCB633D734B7E24069D187137B7EBC1287BAE6B192DEF041423A7B4E0F425C7",
+  "pdf_pages": 26,
+  "repo_desktop_hash_match": true,
+  "checks": {
+    "compileall": "passed: python -m compileall src experiments tests -q",
+    "pytest": "passed: 13 tests",
+    "claim_audit": "passed: python experiments/run_claim_audit.py",
+    "build": "passed: powershell -ExecutionPolicy Bypass -File scripts/build_paper.ps1 -DesktopCopy C:/Users/wangz/OneDrive/Desktop/best of n mcts tree search learned dynamics-v4.pdf",
+    "latex_log_scan": "passed: no unresolved citations, references, rerun warnings, overfull boxes, or natbib warnings",
+    "pdfinfo": "passed: 26 pages, letter",
+    "visual_qa": "passed: rendered all pages; inspected pages 1, 5, 17, 18, 19, and 26"
+  },
+  "evidence_scope": [
+    "controlled learned-dynamics point-mass audit",
+    "static rollout pool comparator",
+    "UCT MCTS, value-guided MCTS, uncertainty-penalized MCTS, and conservative-backup MCTS",
+    "full 20-seed mechanism run",
+    "tail-stress replay and uncertainty-penalty sweep",
+    "reward-bias-strength stress",
+    "seven-angle expansion suite",
+    "repair-backfire counterexample",
+    "closed-loop replay",
+    "Gymnasium CliffWalking-v1 benchmark"
+  ],
+  "claim_gates": {
+    "all_claims_passed": true,
+    "rare_tail_not_dominance": true,
+    "uct_tail_exceeds_static": true,
+    "uncertainty_repair_conditional": true,
+    "repair_backfire_reported": true,
+    "cliffwalking_uct_gap_exceeds_static": true,
+    "cliffwalking_uncertainty_reduces_gap": true,
+    "cliffwalking_uncertainty_improves_true_return": true,
+    "cliffwalking_true_model_low_gap": true,
+    "no_robotics_sota_claim": true,
+    "no_universal_uncertainty_guarantee": true
+  }
+}

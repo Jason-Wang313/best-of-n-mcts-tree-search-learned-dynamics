@@ -1,5 +1,38 @@
 # Final Audit
 
+## Final Artifact and Provenance
+
+- Paper: `best of n mcts tree search learned dynamics-v4.pdf`
+- Source folder: `C:\Users\wangz\best of n mcts tree search learned dynamics`
+- GitHub remote: `https://github.com/Jason-Wang313/best-of-n-mcts-tree-search-learned-dynamics.git`
+- Repository PDF: `paper/final/best of n mcts tree search learned dynamics-v4.pdf`
+- Visible Desktop PDF: `C:\Users\wangz\OneDrive\Desktop\best of n mcts tree search learned dynamics-v4.pdf`
+- SHA256: `FDCB633D734B7E24069D187137B7EBC1287BAE6B192DEF041423A7B4E0F425C7`
+- Page count: 26
+- Repo/Desktop hash match: yes
+- Verified on: 2026-06-16
+
+## Final Verification
+
+```powershell
+python -m compileall src experiments tests -q
+python -m pytest -q
+python experiments\run_claim_audit.py
+powershell -ExecutionPolicy Bypass -File scripts\build_paper.ps1 -DesktopCopy "C:\Users\wangz\OneDrive\Desktop\best of n mcts tree search learned dynamics-v4.pdf"
+rg -n "undefined|Citation.*undefined|Reference.*undefined|Rerun to get|Overfull|LaTeX Warning|Package natbib Warning" "paper\main.log"
+pdfinfo "paper\final\best of n mcts tree search learned dynamics-v4.pdf"
+pdftoppm -png "paper\final\best of n mcts tree search learned dynamics-v4.pdf" "tmp\pdfs\mcts_v4\page"
+```
+
+Results:
+
+- Compile check: passed.
+- Unit tests: 13 passed.
+- Claim audit: all claims passed.
+- Final LaTeX log scan: no unresolved citations, unresolved references, rerun warnings, overfull boxes, or natbib warnings.
+- PDF render: all 26 pages rendered.
+- Visual QA: pages 1, 5, 17, 18, 19, and 26 inspected for title/abstract, expansion table, CliffWalking benchmark, references, claim ledger, appendix tail, clipping, and readability.
+
 1. **Core thesis.** Adaptive tree search over learned dynamics can concentrate computation on local model optimism and create rare branch-capture events.
 
 2. **What is new.** The paper is not a generic test-time-compute curve. It audits the allocation feedback loop in MCTS: optimistic branches receive more visits, backups, and model queries.
@@ -12,7 +45,7 @@
 
 6. **Main remaining limitation.** The learned models are hand-designed; the next version should train a dynamics ensemble on biased data and evaluate on continuous-control benchmarks.
 
-7. **Final PDF location.** Expected repository path: `paper/final/best of n mcts tree search learned dynamics-v4.pdf`. Desktop publication is a post-verification step only.
+7. **Final PDF location.** Expected repository path: `paper/final/best of n mcts tree search learned dynamics-v4.pdf`. The visible Desktop copy is produced with `scripts\build_paper.ps1 -DesktopCopy` after verification.
 
 ## Claim Status
 
