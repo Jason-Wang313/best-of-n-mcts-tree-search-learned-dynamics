@@ -7,7 +7,7 @@
 - GitHub remote: `https://github.com/Jason-Wang313/best-of-n-mcts-tree-search-learned-dynamics.git`
 - Repository PDF: `paper/final/best of n mcts tree search learned dynamics-v4.pdf`
 - Visible Desktop PDF: `C:\Users\wangz\OneDrive\Desktop\best of n mcts tree search learned dynamics-v4.pdf`
-- SHA256: `FDCB633D734B7E24069D187137B7EBC1287BAE6B192DEF041423A7B4E0F425C7`
+- SHA256: `BE6628FA569CBC54D72B88F38920A9A06E92B9CE3F490384D60A43DFEF49BE91`
 - Page count: 26
 - Repo/Desktop hash match: yes
 - Verified on: 2026-06-19
