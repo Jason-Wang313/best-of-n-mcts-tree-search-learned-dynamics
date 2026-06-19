@@ -10,7 +10,7 @@
 - SHA256: `FDCB633D734B7E24069D187137B7EBC1287BAE6B192DEF041423A7B4E0F425C7`
 - Page count: 26
 - Repo/Desktop hash match: yes
-- Verified on: 2026-06-16
+- Verified on: 2026-06-19
 
 ## Final Verification
 
@@ -21,7 +21,7 @@ python experiments\run_claim_audit.py
 powershell -ExecutionPolicy Bypass -File scripts\build_paper.ps1 -DesktopCopy "C:\Users\wangz\OneDrive\Desktop\best of n mcts tree search learned dynamics-v4.pdf"
 rg -n "undefined|Citation.*undefined|Reference.*undefined|Rerun to get|Overfull|LaTeX Warning|Package natbib Warning" "paper\main.log"
 pdfinfo "paper\final\best of n mcts tree search learned dynamics-v4.pdf"
-pdftoppm -png "paper\final\best of n mcts tree search learned dynamics-v4.pdf" "tmp\pdfs\mcts_v4\page"
+pdftoppm -png "paper\final\best of n mcts tree search learned dynamics-v4.pdf" "tmp\pdfs\mcts_v4_verify\page"
 ```
 
 Results:
